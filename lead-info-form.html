@@ -1,0 +1,1522 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Block Appraisals - Lead Review</title>
+<link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --blue:#005298;
+    --blue-dark:#003c70;
+    --gold:#DAC38D;
+    --gold-soft:#f6efe0;
+    --ink:#1a1a1a;
+    --line:#d8dde3;
+  }
+  * { box-sizing: border-box; }
+  body { margin:0; font-family:'Open Sans', Arial, sans-serif; color:var(--ink); background:#eef1f4; line-height:1.5; }
+  .wrap { max-width:780px; margin:0 auto; padding:24px 16px 96px; }
+  .header { background:var(--blue); border-radius:8px; padding:24px 24px 20px; margin-bottom:24px; box-shadow:0 2px 8px rgba(0,82,152,.18); }
+  .logo-chip { display:inline-block; background:#fff; border-radius:6px; padding:8px 12px; margin-bottom:14px; }
+  .logo { height:36px; display:block; }
+  h1 { font-size:22px; margin:0 0 4px; color:#fff; }
+  .sub { font-size:13px; margin:0; color:#cfe0f0; }
+  .section { background:#fff; border:1px solid var(--line); border-radius:8px; padding:18px; margin-bottom:18px; box-shadow:0 1px 3px rgba(0,0,0,.05); }
+  .section > h2 { font-size:14px; margin:0 0 14px; text-transform:uppercase; letter-spacing:.5px; color:var(--blue); border-bottom:2px solid var(--gold); padding-bottom:8px; }
+  label { display:block; font-size:11px; font-weight:600; margin:12px 0 4px; text-transform:uppercase; letter-spacing:.3px; color:#5a6573; }
+  input, select, textarea { width:100%; font-family:inherit; font-size:14px; padding:10px; border:1px solid var(--line); background:#fff; color:var(--ink); border-radius:6px; }
+  input:focus, select:focus, textarea:focus { outline:none; border-color:var(--blue); box-shadow:0 0 0 3px rgba(0,82,152,.15); }
+  .row { border:1px solid var(--line); border-left:3px solid var(--gold); border-radius:6px; padding:12px; margin-bottom:12px; background:#fcfdfe; }
+  .grid2 { display:flex; flex-wrap:wrap; gap:12px; }
+  .grid2 > div { flex:1 1 200px; }
+  button { font-family:inherit; cursor:pointer; }
+  .btn-add { background:var(--gold-soft); color:var(--blue-dark); border:1px solid var(--gold); border-radius:6px; padding:9px 16px; font-size:12px; font-weight:700; text-transform:uppercase; letter-spacing:.3px; }
+  .btn-add:hover { background:var(--gold); }
+  .btn-remove { background:#fff; color:#9aa3ad; border:1px solid var(--line); border-radius:6px; padding:4px 12px; font-size:11px; text-transform:uppercase; letter-spacing:.3px; }
+  .btn-remove:hover { color:#c0392b; border-color:#c0392b; }
+  .btn-submit { background:var(--blue); color:#fff; border:none; border-radius:8px; padding:16px 24px; font-size:15px; font-weight:700; width:100%; text-transform:uppercase; letter-spacing:.5px; box-shadow:0 2px 8px rgba(0,82,152,.25); }
+  .btn-submit:hover { background:var(--blue-dark); }
+  .btn-submit:disabled { opacity:.4; cursor:not-allowed; }
+  .rowhead { display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; }
+  .rowhead .t { font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.3px; color:var(--blue); }
+  .contacts { margin-top:14px; border-top:1px solid var(--line); padding-top:12px; }
+  .clabel { font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.3px; margin-bottom:10px; color:#5a6573; }
+  .hidden { display:none; }
+  #status { margin-top:16px; font-size:13px; padding:14px; border:1px solid var(--line); border-left:3px solid var(--blue); border-radius:6px; background:#fff; word-break:break-word; }
+  .hint { font-size:11px; margin:4px 0 0; color:#8a94a0; }
+  #debugLog { font-family:'Open Sans', Arial, sans-serif; font-size:11px; line-height:1.5; background:#fff; border:1px solid var(--line); border-left:3px solid var(--blue); border-radius:6px; padding:12px; max-height:280px; overflow:auto; white-space:pre-wrap; word-break:break-word; color:#1a1a1a; }
+  #debugLog > div { padding:3px 0; border-bottom:1px solid #f0f2f5; }
+  #debugLog .err { color:#c0392b; font-weight:700; }
+  #debugLog .warn { color:#9a6b00; font-weight:700; }
+  #debugLog .ok { color:#1e7d34; font-weight:700; }
+  .dbg-actions { display:flex; flex-wrap:wrap; gap:8px; margin-top:12px; }
+
+  /* --- Contact Lookup styles --- */
+  .lookup-section { background:var(--gold-soft); border:2px solid var(--gold); border-radius:8px; padding:18px; margin-bottom:18px; }
+  .lookup-section h2 { font-size:14px; margin:0 0 14px; text-transform:uppercase; letter-spacing:.5px; color:var(--blue-dark); border-bottom:2px solid var(--gold); padding-bottom:8px; }
+  .lookup-row { display:flex; gap:8px; align-items:flex-end; flex-wrap:wrap; }
+  .lookup-row > div { flex:1 1 200px; }
+  .lookup-row > button { flex:0 0 auto; margin-bottom:0; }
+  .btn-search { background:var(--blue); color:#fff; border:none; border-radius:6px; padding:10px 20px; font-size:12px; font-weight:700; text-transform:uppercase; letter-spacing:.3px; white-space:nowrap; }
+  .btn-search:hover { background:var(--blue-dark); }
+  .btn-search:disabled { opacity:.4; cursor:not-allowed; }
+  .search-results { margin-top:14px; }
+  .search-result-item { border:1px solid var(--line); border-radius:6px; padding:10px 14px; margin-bottom:8px; background:#fff; cursor:pointer; display:flex; justify-content:space-between; align-items:center; transition:border-color .15s; }
+  .search-result-item:hover { border-color:var(--blue); background:#f0f6fc; }
+  .sr-name { font-weight:700; font-size:14px; }
+  .sr-detail { font-size:12px; color:#5a6573; }
+  .sr-select { font-size:11px; font-weight:700; color:var(--blue); text-transform:uppercase; }
+  .lookup-status { font-size:12px; margin-top:10px; padding:8px 12px; border-radius:6px; }
+  .lookup-status.loading { background:#e8f0fe; color:var(--blue); }
+  .lookup-status.success { background:#e6f4ea; color:#1e7d34; }
+  .lookup-status.error { background:#fce8e6; color:#c0392b; }
+  .prefilled-badge { display:inline-block; background:#e6f4ea; color:#1e7d34; font-size:11px; font-weight:700; padding:3px 10px; border-radius:4px; margin-left:8px; text-transform:uppercase; letter-spacing:.3px; }
+
+  /* --- Address Match Suggestions --- */
+  .match-section { background:#fff; border:2px solid var(--blue); border-radius:8px; padding:18px; margin-bottom:18px; box-shadow:0 1px 3px rgba(0,0,0,.05); }
+  .match-section h2 { font-size:14px; margin:0 0 6px; text-transform:uppercase; letter-spacing:.5px; color:var(--blue-dark); border-bottom:2px solid var(--gold); padding-bottom:8px; }
+  .match-intro { font-size:12px; color:#5a6573; margin:8px 0 12px; }
+  .match-status { font-size:12px; color:#5a6573; margin-bottom:10px; }
+  .match-item { border:1px solid var(--line); border-left:3px solid var(--gold); border-radius:6px; padding:12px 14px; margin-bottom:10px; background:#fcfdfe; }
+  .match-top { display:flex; justify-content:space-between; align-items:flex-start; gap:12px; }
+  .match-name { font-weight:700; font-size:14px; color:var(--ink); }
+  .match-addr { font-size:12px; color:#5a6573; margin-top:2px; word-break:break-word; }
+  .match-score { flex:0 0 auto; font-size:11px; font-weight:700; color:var(--blue); background:#e8f0fe; border-radius:4px; padding:3px 8px; white-space:nowrap; }
+  .match-actions { display:flex; gap:8px; margin-top:10px; flex-wrap:wrap; }
+  .btn-preview { background:#fff; color:var(--blue-dark); border:1px solid var(--line); border-radius:6px; padding:6px 14px; font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.3px; }
+  .btn-preview:hover { border-color:var(--blue); }
+  .btn-loadin { background:var(--blue); color:#fff; border:none; border-radius:6px; padding:6px 14px; font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.3px; }
+  .btn-loadin:hover { background:var(--blue-dark); }
+  .match-detail { display:none; margin-top:10px; border-top:1px solid var(--line); padding-top:10px; font-size:12px; color:#3a4551; }
+  .match-detail.open { display:block; }
+  .match-detail .mdrow { padding:3px 0; }
+  .match-detail .mdlabel { font-weight:700; color:#5a6573; text-transform:uppercase; font-size:10px; letter-spacing:.3px; }
+  .match-toolbar { display:flex; gap:8px; align-items:center; flex-wrap:wrap; margin-bottom:10px; }
+  .match-pick { display:flex; flex-direction:column; gap:4px; flex:0 0 auto; }
+  .pick { display:inline-flex; align-items:center; gap:6px; margin:0; font-size:12px; font-weight:600; text-transform:none; letter-spacing:0; color:var(--ink); cursor:pointer; }
+  .pick input { width:auto; padding:0; margin:0; }
+  .match-main { flex:1 1 auto; min-width:0; }
+  .match-item.is-master { border-left-color:var(--blue); background:#f0f6fc; }
+  .match-item.is-loaded .match-score { background:var(--gold-soft); color:var(--blue-dark); }
+  .master-bar { border-top:1px solid var(--line); margin-top:12px; padding-top:12px; }
+  .master-summary { font-size:12px; color:var(--blue-dark); font-weight:600; margin-bottom:10px; word-break:break-word; }
+  .btn-loadin:disabled { opacity:.4; cursor:not-allowed; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="header">
+    <span class="logo-chip"><img class="logo" src="https://blockappraisals.com/wp-content/uploads/2023/12/block-appraisals-nyc-logo.png.webp" alt="Block Appraisals"></span>
+    <h1>Lead Review</h1>
+    <p class="sub">Review and update the information captured from Read.ai before it moves forward.</p>
+  </div>
+
+  <!-- HIDDEN CONTACT ID -->
+  <input type="hidden" id="contactId" value="">
+
+  <!-- CONTACT LOOKUP -->
+  <div class="lookup-section">
+    <h2>Contact Lookup <span id="prefilledBadge" class="prefilled-badge hidden">Prefilled from GHL</span></h2>
+    <p class="hint" style="margin:0 0 12px">Search for an existing GHL contact by email, phone, name, or property address to prefill the form. Or pass <code>contactId</code> in the URL.</p>
+    <div class="lookup-row">
+      <div>
+        <label>Search by Email, Phone, Name, or Address</label>
+        <input type="text" id="lookupQuery" placeholder="email@example.com, (212) 555-1234, Jane Doe, or 123 Main St">
+      </div>
+      <button type="button" class="btn-search" id="btnSearch" onclick="searchContact()">Search</button>
+    </div>
+    <div id="searchResults" class="search-results hidden"></div>
+    <div id="lookupStatus" class="lookup-status hidden"></div>
+  </div>
+
+  <!-- ADDRESS MATCH SUGGESTIONS -->
+  <div class="match-section" id="matchSection">
+    <h2>Possible Existing Contacts</h2>
+    <p class="match-intro">Existing contacts that share an address with this lead (checked across Property List, Property Addresses, Client Address List, cpropertylist, and contact names that are addresses). Pick the one to keep as the master, tick the ones that are duplicates of it, then click "Use as master". Ticked contacts are tagged <code>potential-duplicate-contact</code> in GHL after the form is submitted. Nothing is merged or deleted.</p>
+    <div class="match-toolbar">
+      <button type="button" class="btn-preview" id="btnRecheck">Check for duplicates</button>
+      <span class="hint" style="margin:0">Uses the addresses on this form plus the loaded contact.</span>
+    </div>
+    <div id="matchStatus" class="match-status">No duplicate check run yet.</div>
+    <div id="matchList"></div>
+    <div id="masterBar" class="master-bar hidden">
+      <div id="masterSummary" class="master-summary">No master selected yet.</div>
+      <div class="match-actions">
+        <button type="button" class="btn-loadin" id="btnUseMaster" disabled>Use as master</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- CONTACT -->
+  <div class="section">
+    <h2>GHL Contact Information</h2>
+    <label>Name</label><input id="f_name">
+    <div class="grid2">
+      <div><label>Email</label><input id="f_email" type="email"></div>
+      <div><label>Phone</label><input id="f_phone" type="tel"></div>
+    </div>
+  </div>
+
+  <!-- CLIENTS -->
+  <div class="section">
+    <h2>Engagement Agreement Clients</h2>
+    <div id="clients"></div>
+    <button type="button" class="btn-add" onclick="addClient()">Add Client</button>
+  </div>
+
+  <!-- PROPERTIES -->
+  <div class="section">
+    <h2>Subject Properties</h2>
+    <div id="properties"></div>
+    <button type="button" class="btn-add" onclick="addProperty()">Add Property</button>
+  </div>
+
+  <!-- INTENDED USERS -->
+  <div class="section">
+    <h2>Additional Intended Users</h2>
+    <div id="users"></div>
+    <button type="button" class="btn-add" onclick="addUser()">Add Intended User</button>
+  </div>
+
+  <!-- APPRAISAL DETAILS -->
+  <div class="section">
+    <h2>Appraisal Request Details</h2>
+
+    <label>Appraisal Scenario</label>
+    <select id="scenario">
+      <option value="">-- Select Scenario --</option>
+      <option value="Divorce / Matrimonial">Divorce / Matrimonial</option>
+      <option value="Partition / Buyout">Partition / Buyout</option>
+      <option value="Bankruptcy / Litigation">Bankruptcy / Litigation</option>
+      <option value="Date of Death">Date of Death</option>
+      <option value="Estate Planning">Estate Planning</option>
+      <option value="Gift Tax">Gift Tax</option>
+      <option value="Tax Appeal / Certiorari">Tax Appeal / Certiorari</option>
+      <option value="Pre-Listing (Seller)">Pre-Listing (Seller)</option>
+      <option value="Purchase Decision (Buyer)">Purchase Decision (Buyer)</option>
+      <option value="Buyout (Co-owner / Family)">Buyout (Co-owner / Family)</option>
+      <option value="Immigration / Asset Verification">Immigration / Asset Verification</option>
+      <option value="Financial Disclosure">Financial Disclosure</option>
+      <option value="Co-op Board / Limited Scope">Co-op Board / Limited Scope</option>
+      <option value="Measurement / Consulting">Measurement / Consulting</option>
+      <option value="Insurance / Replacement Cost">Insurance / Replacement Cost</option>
+      <option value="Internal Asset Management">Internal Asset Management</option>
+    </select>
+
+    <div id="g_effective_date" class="hidden">
+      <label>Appraisal Effective Date</label>
+      <input id="f_effective_date" type="date">
+      <p class="hint">Sent as YYYY-MM-DD</p>
+    </div>
+
+    <div id="g_donor" class="hidden">
+      <label>Name of Donor</label>
+      <input id="f_donor">
+    </div>
+
+    <div id="g_dod" class="hidden">
+      <label>Date of Death</label>
+      <input id="f_dod" type="date">
+      <p class="hint">Sent as YYYY-MM-DD</p>
+    </div>
+
+    <div id="g_decedent" class="hidden">
+      <label>Name of the Decedent</label>
+      <input id="f_decedent">
+    </div>
+
+    <div id="g_partial" class="hidden">
+      <label>Partial Interest Required</label>
+      <select id="f_partial_required">
+        <option value="">--</option>
+        <option value="Yes">Yes</option>
+        <option value="No">No</option>
+      </select>
+      <div id="g_partial_pct" class="hidden">
+        <label>Partial Interest Percentage</label>
+        <input id="f_partial_pct" placeholder="e.g. 50%">
+      </div>
+    </div>
+
+    <div id="g_coop" class="hidden">
+      <label>Co-op Board Name</label>
+      <input id="f_coop">
+    </div>
+
+    <div id="g_rep" class="hidden">
+      <label>Representation Type</label>
+      <select id="f_rep">
+        <option value="">--</option>
+        <option value="Single Party">Single Party</option>
+        <option value="Neutral Both Parties">Neutral Both Parties</option>
+      </select>
+    </div>
+
+    <label>Two Stage Appraisal</label>
+    <select id="f_two_stage">
+      <option value="">--</option>
+      <option value="Yes">Yes</option>
+      <option value="No">No</option>
+    </select>
+
+    <label>Rent Schedule Required</label>
+    <select id="f_rental_comps">
+      <option value="">--</option>
+      <option value="Yes">Yes</option>
+      <option value="No">No</option>
+    </select>
+
+    <label>Inspection Type</label>
+    <select id="f_inspection">
+      <option value="">--</option>
+      <option value="interior">interior</option>
+      <option value="exterior">exterior</option>
+      <option value="interior and exterior">interior and exterior</option>
+    </select>
+
+    <label>Appraisal Fee</label>
+    <input id="f_fee" type="number" inputmode="decimal" min="0" step="0.01" placeholder="e.g. 1500">
+    <p class="hint">Numbers only, no currency symbol or commas.</p>
+
+    <label>Estimated Turnaround Time</label>
+    <input id="f_turnaround" placeholder="e.g. two to three weeks, one week, five days">
+  </div>
+
+  <button type="button" class="btn-submit" id="submitBtn">Submit Reviewed Information</button>
+  <div id="status" class="hidden"></div>
+
+  <div class="section hidden" id="debugSection" style="margin-top:18px;">
+    <h2>Debug Console</h2>
+    <div id="debugLog"><div>Console ready. Submit the form or run a diagnostic to see activity.</div></div>
+    <div class="dbg-actions">
+      <button type="button" class="btn-add" id="btnDiag">Run Connectivity Diagnostic</button>
+      <button type="button" class="btn-add" id="btnCopyPayload">Copy Payload</button>
+      <button type="button" class="btn-add" id="btnCopyUrl">Copy Webhook URL</button>
+      <button type="button" class="btn-add" id="btnClearLog">Clear Log</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  // ============================================================
+  //  CONFIG
+  // ============================================================
+  var CONFIG = {
+    WEBHOOK_URL: 'https://services.leadconnectorhq.com/hooks/iLvogjPhjDQFnI1DEE15/webhook-trigger/517976c0-8a8c-47d5-9530-63f1277a7e5b',
+    GHL_API_KEY: '{{custom_values.location_pit}}',          // Private Integration Token (Sub-Account level)
+    LOCATION_ID: 'iLvogjPhjDQFnI1DEE15',
+    GHL_API_BASE: 'https://services.leadconnectorhq.com',
+    GHL_API_VERSION: '2021-07-28'
+  };
+
+  // ============================================================
+  //  CUSTOM FIELD ID MAP  (fieldKey -> GHL custom field ID)
+  // ============================================================
+  var CF = {
+    appraisal_scenario:             'RezwuHq1V9StVaYYg4cw',
+    client_list:                    'yC6JeXFRW3MJxPpa6X5Z',
+    property_list:                  '4dASGQZrC4vur2n2Tiuc',
+    client_address_list:            'qNftvFNpOGwG8vrfYrbT',
+    client_email_list:              'RRFyaXglFBh8fVvG36IB',
+    client_phone_list:              'WfvUWHXbLc9oB4yzvCGt',
+    client_company_list:            'j88BTKJfoT7q4K4wa4bR',   // TODO: create the custom field in GHL and paste its ID
+    contact_person_list:            'PM5hdZyYOUufFNZylvc8',
+    additional_intended_users_list: 'RbLuOgW8iPOAUPj8Ua8N',
+    appraisal_effective_date:       'K8ZEwtsxMqVbCDVRxhIw',
+    date_of_death:                  'HhkAJMLSlrihzcsbDUPJ',
+    name_of_the_decedent:           'ZahmZtEyQXdiXdGFglb5',
+    partial_interest_required:      '5H1ZZermHO8LqmeBfM0D',
+    partial_interest_percentage:    'jumrUeoY7nTgp29gfdrD',
+    coop_board_name:                'ZfN0B8GCjv1NBPcfwl1g',
+    representation_type:            'eDA2yLmHjKgyGxY0HvJm',
+    two_stage:                      'WzDg7aghk9A12M27Gw1K',
+    inspection_type:                'WL7PzZ6pU7WAaYAZlwTb',
+    name_of_donor:                  'omh8S7385b55feVvnrRP',
+    agreement_fee:                  'BiZiOWN0sCWcu8TMrLka',
+    estimated_turnaround:           'W399ISec62jX9ewgSq0j',
+    rental_comps_required:          '4fKLXyDJHjWHEtFMjXoP'
+  };
+
+  // Reverse map: GHL field ID -> our key name
+  var CF_REV = {};
+  Object.keys(CF).forEach(function(k){ CF_REV[CF[k]] = k; });
+
+  // scenario -> conditional groups to reveal
+  var COND = {
+    'Estate Planning': ['g_effective_date'],
+    'Gift Tax': ['g_effective_date', 'g_donor'],
+    'Date of Death': ['g_dod', 'g_decedent'],
+    'Buyout (Co-owner / Family)': ['g_partial'],
+    'Partition / Buyout': ['g_partial'],
+    'Co-op Board / Limited Scope': ['g_coop'],
+    'Divorce / Matrimonial': ['g_rep']
+  };
+  var ALL_GROUPS = ['g_effective_date','g_donor','g_dod','g_decedent','g_partial','g_coop','g_rep'];
+
+  // ============================================================
+  //  HELPERS (unchanged from original)
+  // ============================================================
+  function qp(){ return new URLSearchParams(window.location.search); }
+  function val(p,k){ var v=p.get(k); return v===null ? '' : v; }
+  // Coerce a stored date to YYYY-MM-DD for a <input type="date">, which
+  // silently blanks on any other format. Accepts YYYY-MM-DD (with optional
+  // time suffix), MM/DD/YYYY, and anything Date.parse understands.
+  function toISODate(v){
+    v=(v||'').trim(); if(!v) return '';
+    var m=v.match(/^(\d{4})-(\d{2})-(\d{2})/); if(m) return m[1]+'-'+m[2]+'-'+m[3];
+    m=v.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/); if(m) return m[3]+'-'+('0'+m[1]).slice(-2)+'-'+('0'+m[2]).slice(-2);
+    var d=new Date(v); if(isNaN(d)) return '';
+    return d.getFullYear()+'-'+('0'+(d.getMonth()+1)).slice(-2)+'-'+('0'+d.getDate()).slice(-2);
+  }
+  function pipe(s){ return (s||'').split('|').map(function(x){return x.trim();}).filter(function(x){return x.length;}); }
+  // Positional split: empty slots KEPT so index N still lines up with client N.
+  function pipePos(s){ return (s||'').split('|').map(function(x){return x.trim();}); }
+  function normYN(v){
+    if(!v) return '';
+    var t=String(v).trim().toLowerCase();
+    if(['y','yes','true','1'].indexOf(t)>-1) return 'Yes';
+    if(['n','no','false','0'].indexOf(t)>-1) return 'No';
+    return v;
+  }
+  function lastFirst(s){
+    var i=(s||'').indexOf(',');
+    if(i<0) return {last:(s||'').trim(), first:''};
+    return {last:s.slice(0,i).trim(), first:s.slice(i+1).trim()};
+  }
+  function parseProp(s){
+    var i=(s||'').indexOf(','); var head, addr;
+    if(i<0){ head=(s||'').trim(); addr=''; } else { head=s.slice(0,i).trim(); addr=s.slice(i+1).trim(); }
+    var parts=head.split(/\s+/).filter(Boolean);
+    return {type:parts[0]||'', subtype:parts.slice(1).join(' ')||'', address:addr};
+  }
+  function extractBlockLot(addr){
+    addr=addr||'';
+    var block='', lot='';
+    var lm=addr.match(/,\s*Lot\s+([^,]+)\s*$/i);
+    if(lm){ lot=lm[1].trim(); addr=addr.slice(0,lm.index); }
+    var bm=addr.match(/,\s*Block\s+([^,]+)\s*$/i);
+    if(bm){ block=bm[1].trim(); addr=addr.slice(0,bm.index); }
+    return { address:addr.replace(/,\s*$/,'').trim(), block:block, lot:lot };
+  }
+  function parseContactsSeg(seg){
+    var out=[]; if(!seg) return out;
+    var re=/\[([^\]]*)\]/g, m;
+    while((m=re.exec(seg))!==null){
+      var c=m[1].split(',');
+      out.push({ name:(c[0]||'').trim(), phone:(c[1]||'').trim(), email:c.slice(2).join(',').trim() });
+    }
+    return out;
+  }
+  function el(html){ var t=document.createElement('template'); t.innerHTML=html.trim(); return t.content.firstElementChild; }
+  function setSel(id,v){
+    var e=document.getElementById(id); if(!e) return;
+    if(v && !Array.prototype.some.call(e.options,function(o){return o.value===v;})){
+      var o=document.createElement('option'); o.value=v; o.textContent=v; e.appendChild(o);
+    }
+    e.value=v||'';
+  }
+  function setSelEl(e,v){
+    if(v && !Array.prototype.some.call(e.options,function(o){return o.value===v;})){
+      var o=document.createElement('option'); o.value=v; o.textContent=v; e.appendChild(o);
+    }
+    e.value=v||'';
+  }
+
+  // ============================================================
+  //  GHL API HELPERS
+  // ============================================================
+  function ghlHeaders(){
+    return {
+      'Authorization': 'Bearer ' + CONFIG.GHL_API_KEY,
+      'Version': CONFIG.GHL_API_VERSION,
+      'Content-Type': 'application/json',
+      'Accept': 'application/json'
+    };
+  }
+
+  function checkApiKey(){
+    if(!CONFIG.GHL_API_KEY || /^\{\{/.test(CONFIG.GHL_API_KEY)){
+      dbg('GHL_API_KEY is empty or the {{custom_values.location_pit}} merge field did not resolve (page opened outside GHL?).','err');
+      setLookupStatus('API key not configured. Set CONFIG.GHL_API_KEY in the script.', 'error');
+      return false;
+    }
+    return true;
+  }
+
+  // GET /contacts/:contactId
+  function fetchContactById(contactId){
+    if(!checkApiKey()) return;
+    dbg('Fetching contact by ID: ' + contactId);
+    setLookupStatus('Loading contact...', 'loading');
+
+    fetch(CONFIG.GHL_API_BASE + '/contacts/' + contactId, {
+      method: 'GET',
+      headers: ghlHeaders()
+    })
+    .then(function(res){
+      dbg('GET /contacts/' + contactId + ' => status=' + res.status, res.ok ? 'ok' : 'err');
+      if(!res.ok) throw new Error('GHL returned HTTP ' + res.status);
+      return res.json();
+    })
+    .then(function(data){
+      if(!data || !data.contact){
+        throw new Error('No contact object in response');
+      }
+      dbg('Contact fetched: ' + (data.contact.contactName || data.contact.firstName + ' ' + data.contact.lastName), 'ok');
+      prefillFromGHL(data.contact);
+      setLookupStatus('Contact loaded: ' + (data.contact.contactName || data.contact.email || contactId), 'success');
+      document.getElementById('prefilledBadge').classList.remove('hidden');
+      maybeRunAddressMatch(data.contact);
+    })
+    .catch(function(err){
+      dbg('Fetch contact failed: ' + (err && err.message ? err.message : err), 'err');
+      setLookupStatus('Failed to load contact. ' + (err && err.message ? err.message : ''), 'error');
+    });
+  }
+
+  // ------------------------------------------------------------
+  //  LOOKUP: email / phone / name / address
+  //  Verified against this account on 2026-09-16:
+  //   - phone `eq` only matches the stored E.164 form (+1XXXXXXXXXX),
+  //     so the query is normalised first; `contains` on the last 7
+  //     digits is the fallback.
+  //   - email `eq` is case-sensitive and emails are stored lower-case.
+  //   - the top-level `query` param finds contacts by name.
+  //   - addresses live only in custom fields (address1 is never set and
+  //     is not a valid filter here); searched via customFields.<id>.
+  // ------------------------------------------------------------
+  function normalizePhone(q){
+    var d = (q||'').replace(/\D/g,'');
+    if(!d) return '';
+    if(d.length === 10) return '+1' + d;
+    if(d.length === 11 && d.charAt(0) === '1') return '+' + d;
+    return '+' + d;
+  }
+  function classifyQuery(q){
+    if(q.indexOf('@') > -1) return 'email';
+    if(/^[\d\s()+.\-]+$/.test(q) && q.replace(/\D/g,'').length >= 7) return 'phone';
+    if(/^\d+[A-Za-z]?(-\d+)?\s+\S/.test(q)) return 'address';
+    return 'name';
+  }
+  function oneFilter(field, op, value){ return { filters: [{ field: field, operator: op, value: value }] }; }
+
+  // POST /contacts/search with locationId + pageLimit merged in. Resolves to the contacts array.
+  function ghlSearch(body, label){
+    var full = { locationId: CONFIG.LOCATION_ID, pageLimit: body.pageLimit || 10 };
+    Object.keys(body).forEach(function(k){ full[k] = body[k]; });
+    return fetch(CONFIG.GHL_API_BASE + '/contacts/search', { method:'POST', headers: ghlHeaders(), body: JSON.stringify(full) })
+      .then(function(res){
+        dbg('POST /contacts/search [' + label + '] => status=' + res.status, res.ok ? 'ok' : 'err');
+        if(!res.ok){ return res.text().then(function(t){ throw new Error('GHL returned HTTP ' + res.status + (t ? ' ' + t.slice(0,160) : '')); }); }
+        return res.json();
+      })
+      .then(function(d){ var c = (d && d.contacts) || []; dbg('  [' + label + '] returned ' + c.length + ' contact(s)', c.length ? 'ok' : 'warn'); return c; });
+  }
+
+  function searchContact(){
+    if(!checkApiKey()) return;
+    var query = (document.getElementById('lookupQuery').value || '').trim();
+    if(!query){ setLookupStatus('Enter an email, phone, name, or property address to search.', 'error'); return; }
+
+    var kind = classifyQuery(query), attempts = [];
+    if(kind === 'email'){
+      var em = query.toLowerCase();
+      attempts.push({ label: 'email eq', body: oneFilter('email','eq',em) });
+      attempts.push({ label: 'email contains', body: oneFilter('email','contains',em) });
+    } else if(kind === 'phone'){
+      var e164 = normalizePhone(query), digits = query.replace(/\D/g,'');
+      attempts.push({ label: 'phone eq ' + e164, body: oneFilter('phone','eq',e164) });
+      attempts.push({ label: 'phone contains ' + digits.slice(-7), body: oneFilter('phone','contains',digits.slice(-7)) });
+    } else if(kind === 'address'){
+      var toks = deriveTokens([query]); if(!toks.length) toks = [query];
+      attempts.push({ label: 'address fields contain ' + toks.join(' / '), body: { filters: [addressOrGroup(toks)], pageLimit: 20 } });
+    } else {
+      attempts.push({ label: 'name query', body: { query: query } });
+    }
+
+    dbg('Lookup "' + query + '" classified as ' + kind);
+    setLookupStatus('Searching...', 'loading');
+    document.getElementById('btnSearch').disabled = true;
+
+    // Try each attempt in order until one returns results.
+    function attempt(i){
+      if(i >= attempts.length) return Promise.resolve([]);
+      return ghlSearch(attempts[i].body, attempts[i].label).then(function(contacts){
+        return contacts.length ? contacts : attempt(i+1);
+      });
+    }
+    attempt(0).then(function(contacts){
+      document.getElementById('btnSearch').disabled = false;
+      if(contacts.length === 0){
+        setLookupStatus('No contacts found for "' + query + '".', 'error');
+        document.getElementById('searchResults').classList.add('hidden');
+        return;
+      }
+      if(contacts.length === 1){
+        dbg('Single result, auto-selecting contact: ' + contacts[0].id, 'ok');
+        selectSearchResult(contacts[0].id);
+        document.getElementById('searchResults').classList.add('hidden');
+        return;
+      }
+      renderSearchResults(contacts);
+    })
+    .catch(function(err){
+      document.getElementById('btnSearch').disabled = false;
+      dbg('Search failed: ' + (err && err.message ? err.message : err), 'err');
+      setLookupStatus('Search failed. ' + (err && err.message ? err.message : ''), 'error');
+    });
+  }
+
+  // Search results carry firstNameLowerCase/lastNameLowerCase; GET /contacts/:id carries firstName/lastName.
+  function displayName(c){
+    if(!c) return '(no name)';
+    return c.contactName ||
+      [c.firstName, c.lastName].filter(Boolean).join(' ') ||
+      [c.firstNameLowerCase, c.lastNameLowerCase].filter(Boolean).join(' ') ||
+      '(no name)';
+  }
+
+  function renderSearchResults(contacts){
+    var container = document.getElementById('searchResults');
+    container.innerHTML = '<div class="clabel" style="margin-bottom:8px">Select a contact (' + contacts.length + ' found)</div>';
+    contacts.forEach(function(c){
+      var detail = [c.email, c.phone].filter(Boolean).join(' | ');
+      if(isPlaceholder(c)) detail += (detail ? ' | ' : '') + 'placeholder / unmatched lead';
+      var item = el(
+        '<div class="search-result-item">' +
+          '<div><div class="sr-name"></div><div class="sr-detail"></div></div>' +
+          '<span class="sr-select">Select</span>' +
+        '</div>'
+      );
+      item.querySelector('.sr-name').textContent = displayName(c);
+      item.querySelector('.sr-detail').textContent = detail || c.id;
+      item.addEventListener('click', function(){ selectSearchResult(c.id); });
+      container.appendChild(item);
+    });
+    container.classList.remove('hidden');
+    setLookupStatus('', '');
+  }
+
+  function selectSearchResult(contactId){
+    resetMatch();
+    document.getElementById('contactId').value = contactId;
+    document.getElementById('searchResults').classList.add('hidden');
+    dbg('Selected contactId: ' + contactId);
+    fetchContactById(contactId);
+  }
+
+  function setLookupStatus(msg, level){
+    var el = document.getElementById('lookupStatus');
+    if(!msg){ el.classList.add('hidden'); return; }
+    el.classList.remove('hidden', 'loading', 'success', 'error');
+    if(level) el.classList.add(level);
+    el.textContent = msg;
+  }
+
+  // ============================================================
+  //  ADDRESS MATCH  (duplicate discovery + master selection)
+  //  Anchors  = every address on the loaded contact PLUS every address
+  //             typed into the form (property rows + client addresses).
+  //             A contact NAME that looks like an address also counts.
+  //  Discover = ONE /contacts/search with an OR group of
+  //             customFields.<id> contains <token> across the four
+  //             address custom fields, plus contactName contains <token>.
+  //             (address1/city/postalCode are never populated on this
+  //             account and address1 is rejected as a filter field, which
+  //             is why the old scan always came back empty.)
+  //  Score    = client-side similarity on the customFields the search
+  //             response already carries (no per-candidate fetch).
+  //  Then the user picks ONE master (no default) and ticks the contacts
+  //  that are duplicates of it. "Use as master" loads the master into the
+  //  form; on submit, after the webhook accepts, the ticked contacts are
+  //  tagged MATCH.DUP_TAG in GHL. No merge is performed.
+  //  Debug: append ?debug=1.
+  // ============================================================
+  var MATCH = {
+    PLACEHOLDER_DOMAIN: 'blockappraisals.com', // email domain that means "Read.ai lead could not be matched"
+    MAX_TOKENS: 6,              // distinct address tokens per search
+    SEARCH_LIMIT: 50,           // candidates requested from the OR search
+    MAX_CANDIDATES: 25,         // cap on candidates we score
+    MIN_SCORE: 0.45,            // similarity threshold to surface a suggestion (0..1)
+    TOP_N: 8,                   // max suggestions shown
+    DUP_TAG: 'potential-duplicate-contact' // tag written on ticked contacts after submit
+  };
+
+  // Address-bearing custom field IDs (all four are searched and scored).
+  var ADDR_CF = {
+    client_address_list: 'qNftvFNpOGwG8vrfYrbT',
+    property_addresses:  'NQPTwDR22oiN0JL5sKqz',
+    cpropertylist:       '9JxOWq0zEq7qFN2yqOIf',
+    property_list:       '4dASGQZrC4vur2n2Tiuc'
+  };
+  var ADDR_LIKE = /^\d+[A-Za-z]?(-\d+)?\s+\S/; // "123 Main ...", "12-14 Elm ..."
+  // Contact names are sometimes addresses: either bare ("123 Main St, ...") or in the
+  // property_list shape ("Residential Co-op, 123 Main St, Apt 3C"). Returns the address or ''.
+  function addressFromName(nm){
+    nm = (nm || '').trim();
+    if(!nm || nm === '(no name)') return '';
+    if(ADDR_LIKE.test(nm)) return nm;
+    var parts = fromPropertyList(nm); // drops the leading "Type Subtype," and Block/Lot
+    return (parts.length && ADDR_LIKE.test(parts[0])) ? parts[0] : '';
+  }
+
+  var _matchCache = {}; // contactId -> contact object (search result or GET /contacts/:id)
+  var _matchState = { loaded: null, rows: [], masterId: '', dupIds: [] };
+
+  function cfVal(contact, fieldId){
+    var arr = contact.customFields || contact.customField || [];
+    for(var i=0;i<arr.length;i++){
+      if(arr[i].id === fieldId){ var v = arr[i].value; return (v==null ? '' : String(v)); }
+    }
+    return '';
+  }
+
+  function stripBlockLot(a){
+    a = a || '';
+    a = a.replace(/,\s*Lot\s+[^,]+\s*$/i,'').replace(/,\s*Block\s+[^,]+\s*$/i,'');
+    return a.replace(/,\s*$/,'').trim();
+  }
+  // property_list entries look like "Type Subtype, <address>" (pipe separated)
+  function fromPropertyList(v){
+    return (v||'').split('|').map(function(e){
+      e = e.trim(); if(!e) return '';
+      var i = e.indexOf(',');
+      var addr = i < 0 ? e : e.slice(i+1).trim(); // drop leading "Type Subtype"
+      return stripBlockLot(addr);
+    }).filter(Boolean);
+  }
+  // cpropertylist lines look like "* <address> - <label>"
+  function fromCPropertyList(v){
+    return (v||'').split(/\r?\n/).map(function(l){
+      l = l.trim().replace(/^\*\s*/,'');
+      var dash = l.lastIndexOf(' - ');
+      if(dash > -1) l = l.slice(0, dash);
+      return stripBlockLot(l.trim());
+    }).filter(Boolean);
+  }
+  // generic blob: split on pipes / newlines
+  function fromPlain(v){
+    return (v||'').split(/[|\r\n]+/).map(function(s){ return stripBlockLot(s.trim()); }).filter(Boolean);
+  }
+
+  var ABBR = {
+    street:'st', st:'st', avenue:'ave', ave:'ave', av:'ave',
+    boulevard:'blvd', blvd:'blvd', drive:'dr', dr:'dr',
+    road:'rd', rd:'rd', lane:'ln', ln:'ln', court:'ct', ct:'ct',
+    place:'pl', pl:'pl', terrace:'ter', ter:'ter', trail:'trl', trl:'trl',
+    parkway:'pkwy', pkwy:'pkwy', highway:'hwy', hwy:'hwy',
+    apartment:'apt', apt:'apt', suite:'ste', ste:'ste', unit:'unit',
+    floor:'fl', fl:'fl', north:'n', south:'s', east:'e', west:'w'
+  };
+  function normAddr(s){
+    s = (s||'').toLowerCase().replace(/[.,#]/g,' ').replace(/[^a-z0-9\s]/g,' ');
+    var toks = s.split(/\s+/).filter(Boolean).map(function(t){ return ABBR[t] || t; });
+    return toks.join(' ').trim();
+  }
+  function bigrams(s){
+    var b = {}; s = s.replace(/\s+/g,'');
+    for(var i=0;i<s.length-1;i++){ var g = s.substr(i,2); b[g] = (b[g]||0)+1; }
+    return b;
+  }
+  function dice(a,b){
+    var ba = bigrams(a), bb = bigrams(b), inter=0, sa=0, sb=0, k;
+    for(k in ba){ sa += ba[k]; if(bb[k]) inter += Math.min(ba[k], bb[k]); }
+    for(k in bb){ sb += bb[k]; }
+    return (sa+sb) ? (2*inter)/(sa+sb) : 0;
+  }
+  function jaccard(a,b){
+    var A={}, B={}, inter=0, uni=0, k;
+    a.forEach(function(t){ A[t]=1; });
+    b.forEach(function(t){ B[t]=1; });
+    for(k in A){ uni++; if(B[k]) inter++; }
+    for(k in B){ if(!A[k]) uni++; }
+    return uni ? inter/uni : 0;
+  }
+  function addrSimilarity(a,b){
+    var na = normAddr(a), nb = normAddr(b);
+    if(!na || !nb) return 0;
+    var score = 0.5*dice(na,nb) + 0.5*jaccard(na.split(' '), nb.split(' '));
+    var numA = (na.match(/^\d+/)||[])[0], numB = (nb.match(/^\d+/)||[])[0];
+    if(numA && numB){ score = (numA===numB) ? Math.min(1, score+0.15) : score*0.5; }
+    return score;
+  }
+  // Distinctive search tokens: "123 Main" (house number + first street word). ZIPs are
+  // far less selective, so they are only used when no number+street token was found.
+  function deriveTokens(rawAddrs){
+    var toks=[], zips=[], seen={};
+    rawAddrs.forEach(function(a){
+      a = (a||'').trim(); if(!a) return;
+      var m = a.match(/^\s*(\d+[A-Za-z]?(?:-\d+)?)\s+([A-Za-z0-9]+)/);
+      if(m){ var t = m[1]+' '+m[2]; if(!seen[t.toLowerCase()]){ seen[t.toLowerCase()]=1; toks.push(t); } }
+      var zip = (a.match(/\b\d{5}\b/)||[])[0];
+      if(zip && !seen[zip]){ seen[zip]=1; zips.push(zip); }
+    });
+    return (toks.length ? toks : zips).slice(0, MATCH.MAX_TOKENS);
+  }
+
+  // One OR group: every address custom field (and the contact name) `contains` every token.
+  function addressOrGroup(tokens){
+    var f = [];
+    Object.keys(ADDR_CF).forEach(function(k){
+      tokens.forEach(function(t){ f.push({ field: 'customFields.' + ADDR_CF[k], operator: 'contains', value: t }); });
+    });
+    tokens.forEach(function(t){ f.push({ field: 'contactName', operator: 'contains', value: t }); });
+    return { group: 'OR', filters: f };
+  }
+
+  function isPlaceholder(c){ return ((c && c.email) || '').toLowerCase().indexOf('@' + MATCH.PLACEHOLDER_DOMAIN) > -1; }
+  function hasDupTag(c){ return ((c && c.tags) || []).some(function(t){ return String(t).toLowerCase() === MATCH.DUP_TAG; }); }
+
+  function searchByTokens(tokens){
+    dbg('Match search: address custom fields / contact name contain any of ' + JSON.stringify(tokens));
+    return ghlSearch({ pageLimit: MATCH.SEARCH_LIMIT, filters: [addressOrGroup(tokens)] }, 'address match')
+      .catch(function(e){ dbg('  match search error: ' + (e && e.message ? e.message : e), 'err'); return []; });
+  }
+
+  // GET /contacts/:id (cached). Used when a search result lacks customFields and for loading the master.
+  function getContactFull(id){
+    if(_matchCache[id] && _matchCache[id]._full) return Promise.resolve(_matchCache[id]);
+    return fetch(CONFIG.GHL_API_BASE + '/contacts/' + id, { method: 'GET', headers: ghlHeaders() })
+      .then(function(res){ if(!res.ok) throw new Error('HTTP ' + res.status); return res.json(); })
+      .then(function(d){ var c = d.contact || d; c._full = true; _matchCache[id] = c; return c; })
+      .catch(function(e){ dbg('  fetch contact ' + id + ' failed: ' + (e && e.message ? e.message : e), 'warn'); return null; });
+  }
+
+  // All address strings held on a contact: the four custom fields, address1 if ever set,
+  // and the contact name when it is itself an address.
+  function candidateAddresses(contact){
+    var out = [];
+    if(contact.address1) out.push(String(contact.address1));
+    var nmAddr = addressFromName(displayName(contact));
+    if(nmAddr) out.push(nmAddr);
+    out = out.concat(fromPlain(cfVal(contact, ADDR_CF.client_address_list)));
+    out = out.concat(fromPlain(cfVal(contact, ADDR_CF.property_addresses)));
+    out = out.concat(fromCPropertyList(cfVal(contact, ADDR_CF.cpropertylist)));
+    out = out.concat(fromPropertyList(cfVal(contact, ADDR_CF.property_list)));
+    return uniqAddrs(out);
+  }
+  // Addresses currently typed into the form (property rows, client addresses, and the
+  // name field when it is an address).
+  function formAddresses(){
+    var out = [];
+    document.querySelectorAll('#properties .p-addr, #clients .c-addr').forEach(function(i){ var v = (i.value||'').trim(); if(v) out.push(v); });
+    var nmAddr = addressFromName(document.getElementById('f_name').value);
+    if(nmAddr) out.push(nmAddr);
+    return out;
+  }
+  function uniqAddrs(list){
+    var seen = {}, res = [];
+    list.forEach(function(a){ a = (a||'').trim(); var k = normAddr(a); if(a && k && !seen[k]){ seen[k]=1; res.push(a); } });
+    return res;
+  }
+
+  // Called after every contact load.
+  function maybeRunAddressMatch(contact){
+    try{
+      _matchState.loaded = contact;
+      if(contact && contact.id){ contact._full = true; _matchCache[contact.id] = contact; }
+      var anchors = uniqAddrs(candidateAddresses(contact).concat(formAddresses()));
+      if(anchors.length === 0){
+        dbg('Match: no address on contact or form, skipping duplicate scan.');
+        renderMatches(contact, []);
+        setMatchStatus('This contact has no address to match on. Add a property address and click "Check for duplicates".');
+        return;
+      }
+      runAddressMatch(contact, anchors);
+    }catch(e){ dbg('Match trigger error: ' + (e && e.message ? e.message : e), 'err'); }
+  }
+
+  // "Check for duplicates" button: uses whatever is on the form right now (+ the loaded contact, if any).
+  function recheckDuplicates(){
+    if(!checkApiKey()) return;
+    var loaded = _matchState.loaded;
+    var anchors = uniqAddrs((loaded ? candidateAddresses(loaded) : []).concat(formAddresses()));
+    if(anchors.length === 0){ setMatchStatus('Enter at least one property or client address first.'); return; }
+    runAddressMatch(loaded, anchors);
+  }
+
+  function runAddressMatch(loaded, anchors){
+    setMatchStatus('Searching for possible matches...');
+    document.getElementById('matchList').innerHTML = '';
+    document.getElementById('masterBar').classList.add('hidden');
+    dbg('--- ADDRESS MATCH START ---');
+    dbg('Anchor addresses: ' + JSON.stringify(anchors));
+
+    var tokens = deriveTokens(anchors);
+    dbg('Search tokens: ' + JSON.stringify(tokens));
+    if(tokens.length === 0){ renderMatches(loaded, []); setMatchStatus('Could not derive a searchable address token (expected "123 Street ...").'); return; }
+
+    searchByTokens(tokens).then(function(list){
+      var byId = {};
+      list.forEach(function(c){
+        if(!c || !c.id) return;
+        if(loaded && c.id === loaded.id) return;
+        byId[c.id] = c;
+      });
+      var candidates = Object.keys(byId).map(function(k){ return byId[k]; }).slice(0, MATCH.MAX_CANDIDATES);
+      dbg('Unique candidates to score: ' + candidates.length);
+
+      // Search results already carry customFields; only deep-fetch when they don't.
+      return Promise.all(candidates.map(function(c){
+        var p = (c.customFields && c.customFields.length) ? Promise.resolve(c) : getContactFull(c.id);
+        return p.then(function(full){
+          if(!full) return null;
+          if(!_matchCache[c.id]) _matchCache[c.id] = full;
+          var cand = candidateAddresses(full);
+          var best = 0, bestAddr = '';
+          anchors.forEach(function(a){
+            cand.forEach(function(b){ var s = addrSimilarity(a,b); if(s > best){ best = s; bestAddr = b; } });
+          });
+          dbg('  ' + c.id + ' ' + displayName(full) + ' best=' + best.toFixed(2) + (bestAddr ? ' via "' + bestAddr + '"' : ''));
+          return { id: c.id, contact: full, score: best, bestAddr: bestAddr };
+        });
+      })).then(function(scored){
+        scored = scored.filter(function(x){ return x && x.score >= MATCH.MIN_SCORE; });
+        scored.sort(function(a,b){ return b.score - a.score; });
+        scored = scored.slice(0, MATCH.TOP_N);
+        dbg('Scored matches >= ' + MATCH.MIN_SCORE + ': ' + scored.length, 'ok');
+        renderMatches(loaded, scored);
+      });
+    }).catch(function(e){
+      dbg('Match run error: ' + (e && e.message ? e.message : e), 'err');
+      setMatchStatus('Match lookup failed. See Debug Console (?debug=1).');
+    });
+  }
+
+  function renderMatches(loaded, scored){
+    var list = document.getElementById('matchList');
+    list.innerHTML = '';
+    _matchState.rows = []; _matchState.masterId = ''; _matchState.dupIds = [];
+    if(loaded && loaded.id) _matchState.rows.push({ id: loaded.id, contact: loaded, score: null, bestAddr: '', isLoaded: true });
+    scored.forEach(function(m){ _matchState.rows.push({ id: m.id, contact: m.contact, score: m.score, bestAddr: m.bestAddr, isLoaded: false }); });
+
+    if(!scored.length){
+      setMatchStatus(loaded ? 'No other contacts share an address with this one.' : 'No existing contacts share these addresses.');
+      document.getElementById('masterBar').classList.add('hidden');
+      return;
+    }
+    setMatchStatus(scored.length + ' possible match' + (scored.length>1 ? 'es' : '') + ' found. Pick the contact to keep as MASTER, tick the ones that are duplicates of it, then click "Use as master".');
+
+    _matchState.rows.forEach(function(m){
+      var c = m.contact;
+      var item = el(
+        '<div class="match-item">' +
+          '<div class="match-top">' +
+            '<div class="match-pick">' +
+              '<label class="pick"><input type="radio" name="masterPick"> Master</label>' +
+              '<label class="pick"><input type="checkbox" class="dupPick"> Duplicate (tag on submit)</label>' +
+            '</div>' +
+            '<div class="match-main"><div class="match-name"></div><div class="match-addr"></div></div>' +
+            '<span class="match-score"></span>' +
+          '</div>' +
+          '<div class="match-actions"><button type="button" class="btn-preview">Preview</button></div>' +
+          '<div class="match-detail"></div>' +
+        '</div>'
+      );
+      item.setAttribute('data-id', m.id);
+      if(m.isLoaded) item.classList.add('is-loaded');
+      var bits = [];
+      if(m.isLoaded) bits.push('currently loaded');
+      if(isPlaceholder(c)) bits.push('placeholder / unmatched lead');
+      if(hasDupTag(c)) bits.push('already tagged ' + MATCH.DUP_TAG);
+      item.querySelector('.match-name').textContent = displayName(c) + (bits.length ? '  (' + bits.join(', ') + ')' : '');
+      item.querySelector('.match-addr').textContent =
+        [c.email, c.phone].filter(Boolean).join('  |  ') + (m.bestAddr ? ('   |   closest: ' + m.bestAddr) : '');
+      item.querySelector('.match-score').textContent = m.score == null ? 'loaded' : Math.round(m.score*100) + '% match';
+
+      var radio = item.querySelector('input[type=radio]'), chk = item.querySelector('.dupPick');
+      radio.value = m.id; chk.value = m.id;
+      radio.addEventListener('change', updateMasterSelection);
+      chk.addEventListener('change', updateMasterSelection);
+
+      var detail = item.querySelector('.match-detail'), previewBtn = item.querySelector('.btn-preview');
+      previewBtn.addEventListener('click', function(){
+        if(!detail.classList.contains('open')){
+          detail.innerHTML = previewHtml(c);
+          detail.classList.add('open');
+          previewBtn.textContent = 'Hide';
+        } else {
+          detail.classList.remove('open');
+          previewBtn.textContent = 'Preview';
+        }
+      });
+      list.appendChild(item);
+    });
+
+    document.getElementById('masterBar').classList.remove('hidden');
+    updateMasterSelection();
+  }
+
+  // Reads the radio/checkbox state. The master can never also be ticked as a duplicate.
+  function updateMasterSelection(){
+    var master = document.querySelector('#matchList input[name=masterPick]:checked');
+    _matchState.masterId = master ? master.value : '';
+    _matchState.dupIds = [];
+    document.querySelectorAll('#matchList .match-item').forEach(function(item){
+      var id = item.getAttribute('data-id'), chk = item.querySelector('.dupPick');
+      var isMaster = id === _matchState.masterId;
+      item.classList.toggle('is-master', isMaster);
+      chk.disabled = isMaster;
+      if(isMaster) chk.checked = false;
+      if(chk.checked) _matchState.dupIds.push(id);
+    });
+    var name = function(id){ var r = rowById(id); return r ? displayName(r.contact) : id; };
+    var s = document.getElementById('masterSummary');
+    if(!_matchState.masterId){ s.textContent = 'No master selected yet.'; }
+    else {
+      s.textContent = 'Master: ' + name(_matchState.masterId) +
+        (_matchState.dupIds.length ? '.  Tag as ' + MATCH.DUP_TAG + ' on submit: ' + _matchState.dupIds.map(name).join(', ') + '.' : '.  No duplicates ticked.');
+    }
+    document.getElementById('btnUseMaster').disabled = !_matchState.masterId;
+  }
+  function rowById(id){ for(var i=0;i<_matchState.rows.length;i++){ if(_matchState.rows[i].id===id) return _matchState.rows[i]; } return null; }
+
+  // Loads the picked master into the form (contactId = master). The duplicate ticks are
+  // kept and applied as tags after the webhook accepts the submit.
+  function useAsMaster(){
+    if(!checkApiKey()) return;
+    updateMasterSelection();
+    var masterId = _matchState.masterId;
+    if(!masterId){ setMatchStatus('Select a master contact first.'); return; }
+    if(_matchState.loaded && _matchState.loaded.id === masterId){
+      document.getElementById('contactId').value = masterId;
+      setMatchStatus('Master is the contact already loaded (' + displayName(_matchState.loaded) + ').' + dupNote());
+      dbg('Master = loaded contact ' + masterId + '; duplicates to tag on submit: ' + JSON.stringify(_matchState.dupIds), 'ok');
+      return;
+    }
+    setMatchStatus('Loading master...');
+    getContactFull(masterId).then(function(master){
+      if(!master) throw new Error('Could not load master ' + masterId);
+      // Keep the current selection while the form reloads from the master.
+      var keepDups = _matchState.dupIds.slice(), keepRows = _matchState.rows.slice();
+      prefillFromGHL(master);
+      document.getElementById('contactId').value = masterId;
+      document.getElementById('prefilledBadge').classList.remove('hidden');
+      _matchState.loaded = master;
+      _matchState.masterId = masterId; _matchState.dupIds = keepDups; _matchState.rows = keepRows;
+      setLookupStatus('Master loaded: ' + displayName(master), 'success');
+      setMatchStatus('Form now shows ' + displayName(master) + ' as master (contactId ' + masterId + ').' + dupNote());
+      dbg('Master loaded: ' + masterId + '; duplicates to tag on submit: ' + JSON.stringify(keepDups), 'ok');
+    }).catch(function(e){
+      dbg('Use as master failed: ' + (e && e.message ? e.message : e), 'err');
+      setMatchStatus('Could not load the selected master. See Debug Console.');
+    });
+  }
+  function dupNote(){
+    var n = _matchState.dupIds.length;
+    return n ? ' On submit, ' + n + ' ticked contact(s) will be tagged ' + MATCH.DUP_TAG + '.' : ' No duplicates ticked.';
+  }
+
+  // After the webhook accepted the submit: POST /contacts/:id/tags on each ticked duplicate.
+  function tagDuplicates(ids){
+    dbg('--- TAG DUPLICATES --- ' + JSON.stringify(ids));
+    return ids.reduce(function(chain, id){
+      return chain.then(function(results){
+        return fetch(CONFIG.GHL_API_BASE + '/contacts/' + id + '/tags', { method:'POST', headers: ghlHeaders(), body: JSON.stringify({ tags: [MATCH.DUP_TAG] }) })
+          .then(function(res){
+            dbg('  POST /contacts/' + id + '/tags => ' + res.status, res.ok ? 'ok' : 'err');
+            if(!res.ok) return res.text().then(function(t){ throw new Error('HTTP ' + res.status + (t ? ' ' + t.slice(0,120) : '')); });
+            results.push({ id: id, ok: true }); return results;
+          })
+          .catch(function(e){ results.push({ id: id, ok: false, error: (e && e.message) || String(e) }); return results; });
+      });
+    }, Promise.resolve([]));
+  }
+
+  function previewHtml(c){
+    function esc(s){ return String(s==null?'':s).replace(/[&<>"]/g,function(ch){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[ch]; }); }
+    function row(l,v){ v = (v==null?'':String(v)); if(!v.trim()) return ''; return '<div class="mdrow"><span class="mdlabel">' + esc(l) + '</span> ' + esc(v) + '</div>'; }
+    return row('Email', c.email) + row('Phone', c.phone) + row('Tags', (c.tags||[]).join(', ')) +
+      row('Client Address List', cfVal(c, ADDR_CF.client_address_list)) +
+      row('Property Addresses', cfVal(c, ADDR_CF.property_addresses)) +
+      row('cpropertylist', cfVal(c, ADDR_CF.cpropertylist)) +
+      row('Property List', cfVal(c, ADDR_CF.property_list));
+  }
+
+  function resetMatch(){
+    _matchState = { loaded: null, rows: [], masterId: '', dupIds: [] };
+    var l = document.getElementById('matchList'); if(l) l.innerHTML = '';
+    var b = document.getElementById('masterBar'); if(b) b.classList.add('hidden');
+    setMatchStatus('No duplicate check run yet.');
+  }
+  function setMatchStatus(msg){
+    var e = document.getElementById('matchStatus');
+    if(e) e.textContent = msg || '';
+  }
+
+  // ============================================================
+  //  PREFILL FROM GHL CONTACT OBJECT
+  // ============================================================
+  function prefillFromGHL(contact){
+    // Clear existing dynamic rows first
+    document.getElementById('clients').innerHTML = '';
+    document.getElementById('properties').innerHTML = '';
+    document.getElementById('users').innerHTML = '';
+
+    // Build a lookup from customFields array: id -> value
+    var cfMap = {};
+    (contact.customFields || contact.customField || []).forEach(function(f){
+      cfMap[f.id] = f.value;
+    });
+    // Also check for older fieldValue format
+    if(!Object.keys(cfMap).length && contact.customField){
+      (contact.customField || []).forEach(function(f){
+        cfMap[f.id] = f.value || f.fieldValue;
+      });
+    }
+
+    dbg('Custom fields found on contact: ' + Object.keys(cfMap).length);
+
+    // Helper to pull a custom field value by our key name
+    function cf(key){
+      var id = CF[key];
+      if(!id) return '';
+      var v = cfMap[id];
+      if(v === undefined || v === null) return '';
+      return String(v).trim();
+    }
+
+    // --- Standard fields ---
+    var contactName = contact.contactName || [contact.firstName, contact.lastName].filter(Boolean).join(' ') || '';
+    document.getElementById('f_name').value = contactName;
+    document.getElementById('f_email').value = contact.email || '';
+    document.getElementById('f_phone').value = contact.phone || '';
+
+    // Store contactId
+    document.getElementById('contactId').value = contact.id || '';
+
+    // --- Clients ---
+    var cl = pipe(cf('client_list'));
+    var ca = pipe(cf('client_address_list'));
+    var ce = pipePos(cf('client_email_list'));
+    var cp = pipePos(cf('client_phone_list'));
+    var cc = pipePos(cf('client_company_list'));
+    var nC = Math.max(cl.length, ca.length);
+    if(nC === 0){ addClient(); }
+    else { for(var i=0; i<nC; i++){ var lf=lastFirst(cl[i]||''); addClient({last:lf.last, first:lf.first, addr:ca[i]||'', email:ce[i]||'', phone:cp[i]||'', company:cc[i]||''}); } }
+
+    // --- Properties ---
+    var pl = pipe(cf('property_list'));
+    var csegs = (cf('contact_person_list') || '').split('|').map(function(x){ return x.trim(); });
+    if(pl.length === 0){ addProperty(); }
+    else { pl.forEach(function(ps, idx){ var pp=parseProp(ps); var bl=extractBlockLot(pp.address); addProperty({type:pp.type, subtype:pp.subtype, address:bl.address, block:bl.block, lot:bl.lot, contacts:parseContactsSeg(csegs[idx]||'')}); }); }
+
+    // --- Intended Users ---
+    var ul = pipe(cf('additional_intended_users_list'));
+    if(ul.length === 0){ addUser(); }
+    else { ul.forEach(function(u){ var lf=lastFirst(u); addUser({last:lf.last, first:lf.first}); }); }
+
+    // --- Scenario ---
+    setScenario(cf('appraisal_scenario'));
+    updateConditional();
+
+    // --- Conditional fields ---
+    document.getElementById('f_effective_date').value = toISODate(cf('appraisal_effective_date'));
+    document.getElementById('f_dod').value = toISODate(cf('date_of_death'));
+    document.getElementById('f_decedent').value = cf('name_of_the_decedent');
+    setSel('f_partial_required', normYN(cf('partial_interest_required')));
+    document.getElementById('f_partial_pct').value = cf('partial_interest_percentage');
+    document.getElementById('f_coop').value = cf('coop_board_name');
+    setSel('f_rep', cf('representation_type'));
+    document.getElementById('f_donor').value = cf('name_of_donor');
+
+    // --- Standard detail fields ---
+    setSel('f_two_stage', normYN(cf('two_stage')));
+    setSel('f_rental_comps', normYN(cf('rental_comps_required')));
+    setSel('f_inspection', cf('inspection_type'));
+
+    // Fee: agreement_fee is MONETORY type, may come as number or formatted
+    var feeVal = cf('agreement_fee');
+    // Strip any currency formatting
+    if(feeVal) feeVal = feeVal.replace(/[^0-9.]/g, '');
+    document.getElementById('f_fee').value = feeVal;
+
+    document.getElementById('f_turnaround').value = cf('estimated_turnaround');
+
+    // Update conditional visibility
+    updateConditional();
+    updateBlockLotAll();
+
+    dbg('Form prefilled from GHL contact data.', 'ok');
+  }
+
+  // ============================================================
+  //  ROW BUILDERS (unchanged)
+  // ============================================================
+  function addClient(d){
+    d=d||{};
+    var r=el('<div class="row"><div class="rowhead"><span class="t">Client</span><button type="button" class="btn-remove">Remove</button></div><div class="grid2"><div><label>First Name</label><input class="c-first"></div><div><label>Last Name</label><input class="c-last"></div></div><label>Company Name <span class="hint" style="font-weight:normal">(optional)</span></label><input class="c-company"><label>Address</label><input class="c-addr"><div class="grid2"><div><label>Email</label><input class="c-email" type="email"></div><div><label>Phone</label><input class="c-phone" type="tel"></div></div></div>');
+    r.querySelector('.btn-remove').onclick=function(){ r.remove(); };
+    r.querySelector('.c-last').value=d.last||'';
+    r.querySelector('.c-first').value=d.first||'';
+    r.querySelector('.c-company').value=d.company||'';
+    r.querySelector('.c-addr').value=d.addr||'';
+    r.querySelector('.c-email').value=d.email||'';
+    r.querySelector('.c-phone').value=d.phone||'';
+    document.getElementById('clients').appendChild(r);
+  }
+
+  function addProperty(d){
+    d=d||{};
+    var r=el('<div class="row" data-prop><div class="rowhead"><span class="t">Property</span><button type="button" class="btn-remove">Remove</button></div><div class="grid2"><div><label>Type</label><select class="p-type"><option value="">--</option><option>Residential</option><option>Commercial</option><option>Land</option></select></div><div><label>Subtype</label><input class="p-sub"></div></div><label>Address</label><input class="p-addr"><div class="p-blocklot hidden grid2"><div><label>Block</label><input class="p-block"></div><div><label>Lot</label><input class="p-lot"></div></div><div class="contacts"><div class="clabel">Contact Persons</div><div class="p-contacts"></div><button type="button" class="btn-add addct">Add Contact</button></div></div>');
+    r.querySelector('.btn-remove').onclick=function(){ r.remove(); };
+    r.querySelector('.addct').onclick=function(){ addContact(r); };
+    setSelEl(r.querySelector('.p-type'), d.type||'');
+    r.querySelector('.p-sub').value=d.subtype||'';
+    r.querySelector('.p-addr').value=d.address||'';
+    r.querySelector('.p-block').value=d.block||'';
+    r.querySelector('.p-lot').value=d.lot||'';
+    r.querySelector('.p-type').addEventListener('change', updateBlockLotAll);
+    document.getElementById('properties').appendChild(r);
+    (d.contacts||[]).forEach(function(c){ addContact(r,c); });
+    updateBlockLotAll();
+  }
+
+  function addContact(propRow,c){
+    c=c||{};
+    var cr=el('<div class="row"><div class="rowhead"><span class="t">Contact</span><button type="button" class="btn-remove">Remove</button></div><div class="grid2"><div><label>Name</label><input class="ct-name"></div><div><label>Phone</label><input class="ct-phone"></div><div><label>Email</label><input class="ct-email"></div></div></div>');
+    cr.querySelector('.btn-remove').onclick=function(){ cr.remove(); };
+    cr.querySelector('.ct-name').value=c.name||'';
+    cr.querySelector('.ct-phone').value=c.phone||'';
+    cr.querySelector('.ct-email').value=c.email||'';
+    propRow.querySelector('.p-contacts').appendChild(cr);
+  }
+
+  function addUser(d){
+    d=d||{};
+    var r=el('<div class="row"><div class="rowhead"><span class="t">Intended User</span><button type="button" class="btn-remove">Remove</button></div><div class="grid2"><div><label>First Name</label><input class="u-first"></div><div><label>Last Name</label><input class="u-last"></div></div></div>');
+    r.querySelector('.btn-remove').onclick=function(){ r.remove(); };
+    r.querySelector('.u-last').value=d.last||'';
+    r.querySelector('.u-first').value=d.first||'';
+    document.getElementById('users').appendChild(r);
+  }
+
+  // ============================================================
+  //  CONDITIONAL VISIBILITY (unchanged)
+  // ============================================================
+  function updateConditional(){
+    var sc=document.getElementById('scenario').value;
+    ALL_GROUPS.forEach(function(g){ document.getElementById(g).classList.add('hidden'); });
+    (COND[sc]||[]).forEach(function(g){ document.getElementById(g).classList.remove('hidden'); });
+    updatePartialPct();
+  }
+  function updatePartialPct(){
+    var gp=document.getElementById('g_partial');
+    var pct=document.getElementById('g_partial_pct');
+    var req=document.getElementById('f_partial_required').value;
+    if(!gp.classList.contains('hidden') && req==='Yes') pct.classList.remove('hidden');
+    else pct.classList.add('hidden');
+  }
+  function updateBlockLotAll(){
+    var twoStage=document.getElementById('f_two_stage').value.trim();
+    document.querySelectorAll('#properties [data-prop]').forEach(function(row){
+      var type=row.querySelector('.p-type').value.trim();
+      var box=row.querySelector('.p-blocklot');
+      if(type==='Land' || twoStage==='Yes') box.classList.remove('hidden');
+      else box.classList.add('hidden');
+    });
+  }
+  function setScenario(v){
+    var sel=document.getElementById('scenario');
+    if(!v){ sel.value=''; return; }
+    var exists=Array.prototype.some.call(sel.options,function(o){return o.value===v;});
+    if(!exists){ var o=document.createElement('option'); o.value=v; o.textContent=v+' (imported)'; sel.appendChild(o); }
+    sel.value=v;
+  }
+
+  // ============================================================
+  //  DEBUG CONSOLE (unchanged)
+  // ============================================================
+  function dbg(msg, level){
+    var panel=document.getElementById('debugLog');
+    if(!panel) return;
+    var d=new Date();
+    var t=('0'+d.getHours()).slice(-2)+':'+('0'+d.getMinutes()).slice(-2)+':'+('0'+d.getSeconds()).slice(-2)+'.'+('00'+d.getMilliseconds()).slice(-3);
+    var line=document.createElement('div');
+    if(level) line.className=level;
+    line.textContent='['+t+'] '+msg;
+    panel.appendChild(line);
+    panel.scrollTop=panel.scrollHeight;
+    if(window.console) console.log('[BA-FORM]', msg);
+  }
+  function copyText(txt, label){
+    if(navigator.clipboard && navigator.clipboard.writeText){
+      navigator.clipboard.writeText(txt).then(function(){ dbg(label+' copied to clipboard ('+txt.length+' chars).','ok'); },
+        function(){ dbg(label+' (copy blocked, manual): '+txt); });
+    } else {
+      dbg(label+' (no clipboard API, manual): '+txt);
+    }
+  }
+  function runDiagnostic(){
+    var stamp=new Date().toISOString();
+    dbg('--- DIAGNOSTIC START ---');
+    dbg('Page protocol: '+window.location.protocol+'  |  Origin: '+window.location.origin);
+    dbg('Target URL: '+CONFIG.WEBHOOK_URL);
+    dbg('GHL API Key configured: '+(CONFIG.GHL_API_KEY ? 'Yes ('+CONFIG.GHL_API_KEY.length+' chars)' : 'NO'));
+    dbg('Location ID: '+CONFIG.LOCATION_ID);
+    dbg('Sending a cors-mode application/json probe. Look for a matching hit at: '+stamp);
+    var probe=JSON.stringify({ _diagnostic:true, ts:stamp });
+    fetch(CONFIG.WEBHOOK_URL, { method:'POST', headers:{'Content-Type':'application/json'}, body:probe })
+      .then(function(res){ dbg('Probe readable. status='+res.status+' ok='+res.ok+'. Endpoint accepts cross-origin JSON.', res.ok?'ok':'err'); return res.text(); })
+      .then(function(body){ if(body) dbg('GHL response body: '+body); })
+      .catch(function(err){
+        dbg('Probe error: '+(err&&err.message?err.message:err),'err');
+        dbg('"Failed to fetch" here means the endpoint did not answer the CORS preflight, or an extension/network blocked leadconnectorhq.com.','warn');
+      });
+  }
+
+  // ============================================================
+  //  COLLECT + SUBMIT (updated to include contactId)
+  // ============================================================
+  function joinLF(last,first){ return [last,first].filter(Boolean).join(', '); }
+
+  function submitForm(){
+    if(_matchState.dupIds.length && document.getElementById('contactId').value !== _matchState.masterId){
+      var st=document.getElementById('status'); st.classList.remove('hidden');
+      st.textContent='You ticked duplicates but have not clicked "Use as master" yet. Do that first so the form is submitted against the master.';
+      return;
+    }
+    var data=collectData();
+    var payload=JSON.stringify(data);
+    var status=document.getElementById('status');
+    var btn=document.getElementById('submitBtn');
+    status.classList.remove('hidden');
+    status.textContent='Submitting...';
+    btn.disabled=true;
+
+    dbg('--- SUBMIT START ---');
+    dbg('Page protocol: '+window.location.protocol);
+    dbg('Target URL: '+CONFIG.WEBHOOK_URL);
+    dbg('Payload size: '+payload.length+' bytes');
+    dbg('Payload: '+payload);
+
+    var t0=Date.now();
+    fetch(CONFIG.WEBHOOK_URL, { method:'POST', headers:{'Content-Type':'application/json'}, body:payload })
+      .then(function(res){
+        dbg('Responded in '+(Date.now()-t0)+'ms. status='+res.status+' ok='+res.ok, res.ok?'ok':'err');
+        if(!res.ok) throw new Error('GHL returned HTTP '+res.status);
+        return res.text();
+      })
+      .then(function(body){
+        dbg('GHL accepted the request.','ok');
+        status.textContent='Submitted. GHL accepted it (HTTP 200).'+(body?' Response: '+body:'');
+        var dupIds=_matchState.dupIds.slice();
+        if(!dupIds.length) return;
+        status.textContent+=' Tagging '+dupIds.length+' duplicate(s) as '+MATCH.DUP_TAG+'...';
+        return tagDuplicates(dupIds).then(function(results){
+          var ok=results.filter(function(r){return r.ok;}), bad=results.filter(function(r){return !r.ok;});
+          status.textContent='Submitted. GHL accepted it (HTTP 200). Tagged '+ok.length+' of '+results.length+' duplicate(s) as '+MATCH.DUP_TAG+'.'+
+            (bad.length?' FAILED: '+bad.map(function(r){return r.id+' - '+r.error;}).join('; ')+' (see Debug Console).':'');
+          dbg(bad.length?'Duplicate tagging finished with failures.':'Duplicate tagging finished.', bad.length?'err':'ok');
+          _matchState.dupIds=[];
+        });
+      })
+      .catch(function(err){
+        dbg('SUBMIT FAILED: '+(err&&err.message?err.message:err),'err');
+        dbg('If this reads "Failed to fetch", check that leadconnectorhq.com is not blocked by an extension and that the workflow is published.','err');
+        status.textContent='Could not dispatch. See the Debug Console. JSON: '+payload;
+        btn.disabled=false;
+      });
+  }
+
+  function collectData(){
+    // Client lists are positional: slot N in every list is client N, so an
+    // empty email or phone is pushed as '' rather than skipped.
+    var clients=[], caddr=[], cemail=[], cphone=[], ccompany=[];
+    document.querySelectorAll('#clients .row').forEach(function(r){
+      var last=r.querySelector('.c-last').value.trim();
+      var first=r.querySelector('.c-first').value.trim();
+      var addr=r.querySelector('.c-addr').value.trim();
+      var email=r.querySelector('.c-email').value.trim();
+      var phone=r.querySelector('.c-phone').value.trim();
+      var company=r.querySelector('.c-company').value.trim();
+      if(!last && !first && !addr && !email && !phone && !company) return;
+      clients.push(joinLF(last,first));
+      caddr.push(addr);
+      ccompany.push(company);
+      cemail.push(email);
+      cphone.push(phone);
+    });
+
+    var props=[], cseg=[];
+    document.querySelectorAll('#properties [data-prop]').forEach(function(r){
+      var type=r.querySelector('.p-type').value.trim();
+      var sub=r.querySelector('.p-sub').value.trim();
+      var addr=r.querySelector('.p-addr').value.trim();
+      var blVisible=!r.querySelector('.p-blocklot').classList.contains('hidden');
+      var block=blVisible ? r.querySelector('.p-block').value.trim() : '';
+      var lot=blVisible ? r.querySelector('.p-lot').value.trim() : '';
+      var hasContacts=r.querySelectorAll('.p-contacts .row').length>0;
+      if(!type && !addr && !block && !lot && !hasContacts) return;
+      var head=sub ? (type+' '+sub) : type;
+      var addrParts=[];
+      if(addr) addrParts.push(addr);
+      if(block) addrParts.push('Block '+block);
+      if(lot) addrParts.push('Lot '+lot);
+      var fullAddr=addrParts.join(', ');
+      props.push(fullAddr ? (head+', '+fullAddr) : head);
+      var cs=[];
+      r.querySelectorAll('.p-contacts .row').forEach(function(cr){
+        var n=cr.querySelector('.ct-name').value.trim();
+        var ph=cr.querySelector('.ct-phone').value.trim();
+        var em=cr.querySelector('.ct-email').value.trim();
+        if(!n && !ph && !em) return;
+        cs.push('['+n+', '+ph+', '+em+']');
+      });
+      cseg.push(cs.join(', '));
+    });
+
+    var users=[];
+    document.querySelectorAll('#users .row').forEach(function(r){
+      var last=r.querySelector('.u-last').value.trim();
+      var first=r.querySelector('.u-first').value.trim();
+      if(!last && !first) return;
+      users.push(joinLF(last,first));
+    });
+
+    function condVal(group,id){
+      var e=document.getElementById(group);
+      if(e && !e.classList.contains('hidden')) return document.getElementById(id).value.trim();
+      return '';
+    }
+
+    var out={
+      contactId: document.getElementById('contactId').value.trim(),
+      appraisal_scenario: document.getElementById('scenario').value,
+      client_list: clients.join('|'),
+      property_list: props.join('|'),
+      client_address_list: caddr.join('|'),
+      client_email_list: cemail.join('|'),
+      client_phone_list: cphone.join('|'),
+      client_company_list: ccompany.join('|'),
+      contact_person_list: cseg.join(' | '),
+      additional_intended_users_list: users.join('|'),
+      appraisal_effective_date: condVal('g_effective_date','f_effective_date'),
+      date_of_death: condVal('g_dod','f_dod'),
+      name_of_the_decedent: condVal('g_decedent','f_decedent'),
+      partial_interest_required: '',
+      partial_interest_percentage: '',
+      coop_board_name: condVal('g_coop','f_coop'),
+      representation_type: condVal('g_rep','f_rep'),
+      two_stage: document.getElementById('f_two_stage').value.trim(),
+      rental_comps_required: document.getElementById('f_rental_comps').value.trim(),
+      inspection_type: document.getElementById('f_inspection').value.trim(),
+      name_of_donor: condVal('g_donor','f_donor'),
+      name: document.getElementById('f_name').value.trim(),
+      email: document.getElementById('f_email').value.trim(),
+      phone: document.getElementById('f_phone').value.trim(),
+      appraisal_fee: document.getElementById('f_fee').value.trim(),
+      estimated_turnaround_time: document.getElementById('f_turnaround').value.trim()
+    };
+
+    var gp=document.getElementById('g_partial');
+    if(gp && !gp.classList.contains('hidden')){
+      out.partial_interest_required=document.getElementById('f_partial_required').value.trim();
+      if(out.partial_interest_required==='Yes'){
+        out.partial_interest_percentage=document.getElementById('f_partial_pct').value.trim();
+      }
+    }
+    return out;
+  }
+
+  // ============================================================
+  //  INIT
+  // ============================================================
+  function init(){
+    var p=qp();
+
+    // Check for contactId in URL first
+    var contactIdParam = val(p, 'contactId');
+    if(contactIdParam){
+      document.getElementById('contactId').value = contactIdParam;
+      dbg('contactId found in URL: ' + contactIdParam);
+      // If we have an API key, fetch and prefill from GHL
+      if(CONFIG.GHL_API_KEY){
+        fetchContactById(contactIdParam);
+        // Skip URL param prefill since GHL data will override
+        bindEvents();
+        return;
+      } else {
+        dbg('contactId present but no GHL_API_KEY configured. Falling back to URL params.', 'warn');
+        setLookupStatus('contactId detected but API key not set. Using URL params for prefill.', 'error');
+      }
+    }
+
+    // Fallback: prefill from URL query params (original behavior)
+    prefillFromUrlParams(p);
+    bindEvents();
+    if(formAddresses().length && CONFIG.GHL_API_KEY && !/^\{\{/.test(CONFIG.GHL_API_KEY)){
+      dbg('Addresses present from URL params; running duplicate check.');
+      recheckDuplicates();
+    }
+  }
+
+  function prefillFromUrlParams(p){
+    document.getElementById('f_name').value=val(p,'name');
+    document.getElementById('f_email').value=val(p,'email');
+    document.getElementById('f_phone').value=val(p,'phone');
+
+    var cl=pipe(val(p,'client_list')), ca=pipe(val(p,'client_address_list'));
+    var ce=pipePos(val(p,'client_email_list')), cp=pipePos(val(p,'client_phone_list')), cc=pipePos(val(p,'client_company_list'));
+    var nC=Math.max(cl.length, ca.length);
+    if(nC===0){ addClient(); }
+    else { for(var i=0;i<nC;i++){ var lf=lastFirst(cl[i]||''); addClient({last:lf.last, first:lf.first, addr:ca[i]||'', email:ce[i]||'', phone:cp[i]||'', company:cc[i]||''}); } }
+
+    var pl=pipe(val(p,'property_list'));
+    var csegs=(val(p,'contact_person_list')||'').split('|').map(function(x){return x.trim();});
+    if(pl.length===0){ addProperty(); }
+    else { pl.forEach(function(ps,idx){ var pp=parseProp(ps); var bl=extractBlockLot(pp.address); addProperty({type:pp.type, subtype:pp.subtype, address:bl.address, block:bl.block, lot:bl.lot, contacts:parseContactsSeg(csegs[idx]||'')}); }); }
+
+    var ul=pipe(val(p,'additional_intended_users_list'));
+    if(ul.length===0){ addUser(); }
+    else { ul.forEach(function(u){ var lf=lastFirst(u); addUser({last:lf.last, first:lf.first}); }); }
+
+    document.getElementById('f_effective_date').value=toISODate(val(p,'appraisal_effective_date'));
+    document.getElementById('f_dod').value=toISODate(val(p,'date_of_death'));
+    document.getElementById('f_decedent').value=val(p,'name_of_the_decedent');
+    setSel('f_partial_required', normYN(val(p,'partial_interest_required')));
+    document.getElementById('f_partial_pct').value=val(p,'partial_interest_percentage');
+    document.getElementById('f_coop').value=val(p,'coop_board_name');
+    setSel('f_rep', val(p,'representation_type'));
+    setSel('f_two_stage', normYN(val(p,'two_stage')));
+    setSel('f_rental_comps', normYN(val(p,'rental_comps_required')));
+    setSel('f_inspection', val(p,'inspection_type'));
+    document.getElementById('f_donor').value=val(p,'name_of_donor');
+    document.getElementById('f_fee').value=val(p,'appraisal_fee');
+    document.getElementById('f_turnaround').value=val(p,'estimated_turnaround_time');
+
+    setScenario(val(p,'appraisal_scenario'));
+    updateConditional();
+    updateBlockLotAll();
+  }
+
+  function bindEvents(){
+    document.getElementById('scenario').addEventListener('change', updateConditional);
+    document.getElementById('f_partial_required').addEventListener('change', updatePartialPct);
+    document.getElementById('f_two_stage').addEventListener('change', updateBlockLotAll);
+    document.getElementById('submitBtn').addEventListener('click', submitForm);
+
+    document.getElementById('btnDiag').addEventListener('click', runDiagnostic);
+    document.getElementById('btnCopyPayload').addEventListener('click', function(){ copyText(JSON.stringify(collectData()), 'Payload'); });
+    document.getElementById('btnCopyUrl').addEventListener('click', function(){ copyText(CONFIG.WEBHOOK_URL, 'Webhook URL'); });
+    document.getElementById('btnClearLog').addEventListener('click', function(){ document.getElementById('debugLog').innerHTML=''; dbg('Log cleared.'); });
+
+    document.getElementById('btnRecheck').addEventListener('click', recheckDuplicates);
+    document.getElementById('btnUseMaster').addEventListener('click', useAsMaster);
+
+    // Allow Enter key in search box
+    document.getElementById('lookupQuery').addEventListener('keydown', function(e){
+      if(e.key === 'Enter'){ e.preventDefault(); searchContact(); }
+    });
+
+    if(qp().get('debug')==='1'){
+      document.getElementById('debugSection').classList.remove('hidden');
+      dbg('Form loaded. Protocol: '+window.location.protocol+'. contactId: '+(document.getElementById('contactId').value||'(none)')+'. '+document.querySelectorAll('#properties [data-prop]').length+' property row(s).');
+    }
+  }
+
+  document.addEventListener('DOMContentLoaded', init);
+</script>
+</body>
+</html>

@@ -139,12 +139,24 @@ const FEE_TABLE_HEADING = 'Summary of Fees:';
 // Dot leaders are literal characters (no API support for tab-stop leaders).
 // Counts are tuned so all three labels terminate at roughly the same x in
 // Times New Roman 12pt. Nudge the dot counts here if the column looks ragged.
-// An empty row pair renders as a vertical spacer.
+// Digit alignment in a proportional font. A plain space is about half a
+// digit wide in Times New Roman, so amounts are padded with Unicode spaces
+// sized to a digit (FIGURE SPACE) and to a comma (PUNCTUATION SPACE) until
+// they are as wide as FEE_TABLE_REF_AMOUNT, the widest amount in the table.
+// See padFeeForTable. If the expert-witness rate ever changes width, change
+// the reference here too.
+const FIGURE_SPACE = ' ';
+const PUNCT_SPACE = ' ';
+const FEE_TABLE_REF_AMOUNT = '3,000';
+
+// Rows sit directly under one another with no spacer rows, so the table
+// reads as a tight block; an empty row pair would render as a blank line.
+// Every amount in the value column goes through padFeeForTable so the
+// digits line up under "$3,000".
 const FEE_TABLE_ROWS = [
   ['Appraisal Report{p:|s}..............................................', '{fee}'],
-  ['Expert witness testimony or deposition............', '$3,000 per full day' + FEE_CELL_BREAK + '$2,000 per half day'],
-  ['', ''],
-  ['Additional conference or research time............', '$  500 per hour']
+  ['Expert witness testimony or deposition............', padFeeForTable('$3,000') + ' per full day' + FEE_CELL_BREAK + padFeeForTable('$2,000') + ' per half day'],
+  ['Additional conference or research time............', padFeeForTable('$500') + ' per hour']
 ];
 
 const APPROACH_TAIL = 'Consideration will be given to all applicable approaches to value based on the nature of the {p:property|properties}, the scope of work, the intended use of the appraisal{p:|s}, and the availability of relevant market data. The report{p:|s} {p:is|are} expected to include {p:a floorplan|floorplans}, {p:location map|location maps}, and photographs of {p:the subject property|each of the subject properties} and comparable sales, as applicable.';
@@ -166,6 +178,24 @@ const TWO_STAGE_ASSUMPTIONS = `Our valuation{p:|s} will be based on the followin
 // Drops out silently when decedentName is empty.
 const DOD_DATE_SUFFIX = ', the date of the death of {decedent}';
 
+// Signature block, rendered once per client, all lines left blank for the
+// signer. NO TABS: the {{csignatureblock}} paragraph in the template can
+// carry custom tab stops, and a tab that jumps to a far stop wraps the
+// underscore run onto its own line. Plain spaces separate the Date column
+// instead. The paragraph must be LEFT-aligned in the template; justified
+// alignment stretches any wrapped line across the page.
+// The block count is the only thing that varies with the payload; the
+// template has no signature lines of its own.
+const SIGNATURE_LINE = '__________________';
+const SIGNATURE_DATE_GAP = '          '; // spaces between the signature and Date
+const SIGNATURE_BLOCK = [
+  'Accepted By: ' + SIGNATURE_LINE + SIGNATURE_DATE_GAP + 'Date: ' + SIGNATURE_LINE,
+  '',
+  '(Print Name) ' + SIGNATURE_LINE
+].join('\n');
+// Blank lines between one client's block and the next.
+const SIGNATURE_BLOCK_GAP = '\n\n\n';
+
 const OUT_MONTHS = ['Jan.', 'Feb.', 'Mar.', 'Apr.', 'May', 'June', 'July', 'Aug.', 'Sep.', 'Oct.', 'Nov.', 'Dec.'];
 
 // When a property has no contact person listed, the client(s) become the
@@ -173,10 +203,18 @@ const OUT_MONTHS = ['Jan.', 'Feb.', 'Mar.', 'Apr.', 'May', 'June', 'July', 'Aug.
 // also makes the Apps Script recolor pass flag them for review).
 const CLIENT_CONTACT_HONORIFIC = '';
 
-// Source fields for client phone / email. These arrive as SINGLE top-level
-// fields on the payload, not per-client lists, so they attach to the FIRST
-// client only. With two or more clients there is no way to tell whose
-// details these are, and duplicating them onto everyone would be worse.
+// Client phone / email sources, in priority order.
+//   1. The per-client lists (clientEmailList / clientPhoneList): pipe-
+//      delimited, POSITIONAL - slot N belongs to client N, empty slots kept.
+//      The intake form emits these from each client row.
+//   2. Fallback: the single top-level fields (email / phone), which are the
+//      GHL contact's details. May hold one value or a loose list (pipes,
+//      commas, semicolons, newlines). Attach to clients by position.
+const CLIENT_EMAIL_LIST_FIELD = 'clientEmailList';
+const CLIENT_PHONE_LIST_FIELD = 'clientPhoneList';
+// Optional per-client company, same positional pipe list. Rendered on its
+// own line under the client's name in clistheader1 when present.
+const CLIENT_COMPANY_LIST_FIELD = 'clientCompanyList';
 const CLIENT_PHONE_FIELD = 'phone';
 const CLIENT_EMAIL_FIELD = 'email';
 
@@ -187,6 +225,23 @@ function splitPipes(str) {
     .split('|')
     .map(s => s.trim())
     .filter(s => s && s.toLowerCase() !== 'null');
+}
+
+// Split a phone/email field that may hold one value or several. Accepts the
+// pipe the other lists use, plus commas, semicolons and newlines, since
+// these values get typed by hand. Dedupes while preserving order.
+function splitContactValues(str) {
+  const seen = {};
+  return String(str || '')
+    .split(/[|,;\n\r]+/)
+    .map(s => s.trim())
+    .filter(s => s && s.toLowerCase() !== 'null')
+    .filter(s => {
+      const k = s.toLowerCase();
+      if (seen[k]) return false;
+      seen[k] = true;
+      return true;
+    });
 }
 
 // Same split, but empty slots are KEPT so that segment index N still lines up
@@ -341,6 +396,27 @@ function formatFee(input) {
   return '$' + String(whole).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
 }
 
+// Fee table only. Pads a short amount so its digits sit under the widest
+// amount in the table (FEE_TABLE_REF_AMOUNT). Times New Roman is
+// proportional - a plain space is about half a digit wide - so ordinary
+// space padding never lines up. Instead each missing character of the
+// reference is replaced by a Unicode space of matching width: FIGURE SPACE
+// (U+2007) for a digit, PUNCTUATION SPACE (U+2008) for the comma.
+//   "$900"   -> "$" + fig + punct + "900"        (same width as "$3,000")
+//   "$50"    -> "$" + fig + punct + fig + "50"
+//   "$1,900" -> unchanged
+// Anything that isn't "$" + digits (e.g. "TBD") passes through untouched.
+// FIGURE_SPACE / PUNCT_SPACE / FEE_TABLE_REF_AMOUNT live in the config block
+// because FEE_TABLE_ROWS calls this at load time.
+function padFeeForTable(fee) {
+  const m = String(fee).match(/^\$([\d,]+)$/);
+  if (!m) return fee;
+  const digits = m[1];
+  const missing = FEE_TABLE_REF_AMOUNT.slice(0, Math.max(0, FEE_TABLE_REF_AMOUNT.length - digits.length));
+  const pad = missing.replace(/\d/g, FIGURE_SPACE).replace(/,/g, PUNCT_SPACE);
+  return '$' + pad + digits;
+}
+
 function parseProperties(propertyList) {
   return splitPipes(propertyList).map(entry => {
     const idx = entry.indexOf(',');
@@ -435,14 +511,21 @@ const twoStage = String(src.twoStageRequired || '').trim().toLowerCase() === 'ye
 
 const clientNames = splitPipes(src.clientList);
 const clientAddresses = splitPipes(src.clientAddressList);
-const clientPhone = String(src[CLIENT_PHONE_FIELD] || '').trim();
-const clientEmail = String(src[CLIENT_EMAIL_FIELD] || '').trim();
+// Per-client list when the form sent one, otherwise the single GHL field.
+function clientContactValues(listField, singleField) {
+  const list = String(src[listField] || '').trim();
+  return list ? splitPipesPositional(list) : splitContactValues(src[singleField]);
+}
+const clientPhones = clientContactValues(CLIENT_PHONE_LIST_FIELD, CLIENT_PHONE_FIELD);
+const clientEmails = clientContactValues(CLIENT_EMAIL_LIST_FIELD, CLIENT_EMAIL_FIELD);
+const clientCompanies = splitPipesPositional(src[CLIENT_COMPANY_LIST_FIELD]);
 const clients = clientNames.map((n, i) => ({
   fullName: reverseName(n),
   lastName: (String(n).indexOf(',') !== -1 ? String(n).slice(0, String(n).indexOf(',')).trim() : String(n).trim()),
   address: clientAddresses[i] || '',
-  phone: i === 0 ? clientPhone : '',
-  email: i === 0 ? clientEmail : ''
+  phone: clientPhones[i] || '',
+  email: clientEmails[i] || '',
+  company: clientCompanies[i] || ''
 }));
 
 const properties = parseProperties(src.propertyList);
@@ -485,20 +568,28 @@ let clistheader2 = '';
 // clistheader2 is names-only, unaffected by scenario.
 clistheader2 = clients.map(c => 'Mx. ' + c.fullName).join('\nand\n');
 
+// Name, then company on its own line when the client has one.
+const nameLines = (c) => 'Mx. ' + c.fullName + (c.company ? '\n' + c.company : '');
+
 if (appraisalScenario === 'Date of Death') {
   const estateLine = 'The Estate of ' + reverseName(src.decedentName);
   const addrs = clients.map(c => c.address);
-  const allSame = addrs.every(a => a === addrs[0]);
+  const companies = clients.map(c => c.company);
+  // Clients collapse onto one "c/o" line only when they share BOTH address
+  // and company; otherwise each gets its own block so the company can sit
+  // under the right name.
+  const allSame = addrs.every(a => a === addrs[0]) && companies.every(c => c === companies[0]);
   if (allSame) {
     const coLine = 'c/o ' + clients.map(c => 'Mx. ' + c.fullName).join(', ');
-    clistheader1 = estateLine + '\n' + coLine + '\n' + breakAddress(addrs[0]);
+    const companyLine = companies[0] ? '\n' + companies[0] : '';
+    clistheader1 = estateLine + '\n' + coLine + companyLine + '\n' + breakAddress(addrs[0]);
   } else {
-    const blocks = clients.map(c => 'c/o Mx. ' + c.fullName + '\n' + breakAddress(c.address));
+    const blocks = clients.map(c => 'c/o ' + nameLines(c) + '\n' + breakAddress(c.address));
     clistheader1 = estateLine + '\n' + blocks.join('\nand\n');
   }
 } else {
   clistheader1 = clients
-    .map(c => 'Mx. ' + c.fullName + '\n' + breakAddress(c.address))
+    .map(c => nameLines(c) + '\n' + breakAddress(c.address))
     .join('\nand\n');
 }
 
@@ -697,10 +788,11 @@ let cappraisalfee = fill(FEE_SENTENCE).split('{fee}').join(feeValue);
 // Litigation scenarios additionally get the fee schedule table. Emitted as a
 // marker-wrapped, tab-delimited block for the Apps Script to convert.
 if (clitigation) {
+  const tableFee = padFeeForTable(feeValue);
   const tableRows = FEE_TABLE_ROWS.map(function (row) {
-    return fill(row[0]).split('{fee}').join(feeValue)
+    return fill(row[0]).split('{fee}').join(tableFee)
       + FEE_COL_DELIM
-      + fill(row[1]).split('{fee}').join(feeValue);
+      + fill(row[1]).split('{fee}').join(tableFee);
   }).join('\n');
 
   cappraisalfee += '\n\n'
@@ -725,6 +817,13 @@ const turnaroundValue = String(src.estimatedTurnaround || '').trim() || TURNAROU
 const turnaroundParagraph = fill(TURNAROUND_SENTENCE)
   .split('{turnaround}').join(turnaroundValue);
 
+// ---------- csignatureblock -----------------------------------------
+// One signature block per client. With no clients at all, a single block
+// still renders so the agreement is signable.
+
+const signerCount = Math.max(clients.length, 1);
+const csignatureblock = new Array(signerCount).fill(SIGNATURE_BLOCK).join(SIGNATURE_BLOCK_GAP);
+
 // ---------- currentDate (New York) ----------------------------------
 
 const nyParts = new Intl.DateTimeFormat('en-US', {
@@ -734,6 +833,10 @@ const getPart = (t) => nyParts.find(p => p.type === t).value;
 const currentDate = OUT_MONTHS[parseInt(getPart('month'), 10) - 1] + ' ' + parseInt(getPart('day'), 10) + ', ' + getPart('year');
 
 // ---------- RETURN --------------------------------------------------
+
+// The GHL contact's own email (single value), distinct from the per-client
+// list. Feeds the `email` output and backstops cemaillist.
+const contactEmail = splitContactValues(src[CLIENT_EMAIL_FIELD])[0] || '';
 
 output = {
   clistheader1,
@@ -749,10 +852,18 @@ output = {
   cadditionalusers,
   clitigation,
   cappraisalfee,
+  csignatureblock,
   currentDate,
   // passthrough values so the Google Docs step can map everything from this one step
   inspectiontype: inspectionParagraph,
   agreementfee: feeValue,
   estimatedturnaround: turnaroundParagraph,
-  email: String(src.email || '')
+  // Every client email, one per line, for the VIA EMAIL header in the doc.
+  // Empty slots dropped, duplicates collapsed, order preserved. When no
+  // client row carried an email, falls back to the GHL contact's email so
+  // the header is never blank.
+  cemaillist: splitContactValues(clientEmails.join('|')).join('\n') || contactEmail,
+  // The GHL contact's email, single value. Step 4 sends this to GHL, where
+  // a multi-line value would not match a contact.
+  email: contactEmail
 };

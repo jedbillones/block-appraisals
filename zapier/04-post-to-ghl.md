@@ -29,10 +29,12 @@ so GHL holds the rendered copy alongside the contact.
 | `cadditionalusers` | 3. Cadditionalusers |
 | `clitigation` | 3. Clitigation |
 | `cappraisalfee` | 3. Cappraisalfee |
+| `csignatureblock` | 3. Csignatureblock |
 | `currentDate` | 3. CurrentDate |
 | `inspectiontype` | 3. Inspectiontype |
 | `agreementfee` | 3. Agreementfee |
 | `estimatedturnaround` | 3. Estimatedturnaround |
+| `cemaillist` | 3. Cemaillist |
 | `email` | 3. Email |
 
 Adding an output key to step 3 means adding its row here too, or the value
